@@ -46,6 +46,7 @@ class BookingFlowSmokeUser(HttpUser):
         # Step 3: Skips
         with self.client.get(
             SKIPS,
+            params={"postcode": POSTCODE_HAPPY_PATH, "heavyWaste": "false", "plasterboard": "false"},
             catch_response=True,
             name="3_skips",
         ) as r:
