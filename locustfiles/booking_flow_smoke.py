@@ -33,7 +33,7 @@ class BookingFlowSmokeUser(HttpUser):
         # Step 2: Waste types
         with self.client.post(
             WASTE_TYPES,
-            json={"postcode": POSTCODE_HAPPY_PATH},
+            json={"postcode": POSTCODE_HAPPY_PATH, "heavyWaste": False, "plasterboard": False},
             headers={"Content-Type": "application/json"},
             catch_response=True,
             name="2_waste_types",
