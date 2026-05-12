@@ -1,0 +1,7 @@
+[tool.mypy]
+python_version = "3.12"
+strict = false            # locust internals have limited type stubs
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100

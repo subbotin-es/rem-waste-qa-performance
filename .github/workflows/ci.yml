@@ -1,0 +1,65 @@
+name: REM Waste — Locust Performance Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 12 * * 1'   # Monday 12:00 UTC
+
+jobs:
+  performance:
+    name: Locust Performance Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Type check
+        run: mypy locustfiles/ config.py --ignore-missing-imports
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Run smoke booking flow (5 users, 30s)
+        run: |
+          locust \
+            -f locustfiles/booking_flow_smoke.py \
+            --headless -u 5 -r 1 -t 30s \
+            --host $BASE_URL \
+            --html results/smoke-report.html \
+            --exit-code-on-error 1
+        env:
+          BASE_URL: https://rem-waste-qa-seven.vercel.app
+
+      - name: Run BS1 4DJ concurrency demonstration (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          locust \
+            -f locustfiles/bs14dj_concurrency.py \
+            --headless -u 10 -r 5 -t 30s \
+            --host $BASE_URL \
+            --html results/bs14dj-report.html
+        env:
+          BASE_URL: https://rem-waste-qa-seven.vercel.app
+
+      - name: Upload Locust reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: locust-performance-reports
+          path: results/
+          retention-days: 30
