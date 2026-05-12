@@ -1,5 +1,7 @@
 # rem-waste-performance
 
+[![CI](https://github.com/subbotin-es/rem-waste-qa-performance/actions/workflows/ci.yml/badge.svg)](https://github.com/subbotin-es/rem-waste-qa-performance/actions/workflows/ci.yml)
+
 **Standalone Locust performance suite targeting REM Waste booking flow**
 
 ## Overview
@@ -38,6 +40,33 @@ in [FINDINGS.md](FINDINGS.md).
 **Portfolio significance:** Demonstrates that performance testing is a QA discipline
 beyond capacity measurement. It's a tool for discovering architectural constraints
 invisible under sequential test execution.
+
+---
+
+## Latest CI Results
+
+**Run:** 2026-05-12 | **Config:** 5 users, spawn 1/s, 30s duration, Vercel free tier
+
+### Response times — smoke booking flow (SW1A 1AA happy path)
+
+| Step | Reqs | Failures | Avg | P50 | P90 | P95 | P99 | Max |
+|---|---|---|---|---|---|---|---|---|
+| POST 1_postcode_lookup | 113 | 0 (0%) | 57 ms | 50 ms | 65 ms | 98 ms | 210 ms | 279 ms |
+| POST 2_waste_types | 113 | 0 (0%) | 51 ms | 48 ms | 63 ms | 72 ms | 99 ms | 129 ms |
+| GET 3_skips | 113 | 0 (0%) | 53 ms | 48 ms | 65 ms | 80 ms | 130 ms | 214 ms |
+| POST 4_booking_confirm | 113 | 0 (0%) | 53 ms | 49 ms | 62 ms | 75 ms | 190 ms | 225 ms |
+| **Aggregated** | **452** | **0 (0%)** | **53 ms** | **49 ms** | **64 ms** | **79 ms** | **190 ms** | **279 ms** |
+
+### SLO compliance
+
+| Threshold | Target | Actual | Status |
+|---|---|---|---|
+| P95 | ≤ 2000 ms | 79 ms | ✅ |
+| P99 | ≤ 5000 ms | 190 ms | ✅ |
+| Error rate | ≤ 5% | 0% | ✅ |
+
+> HTML reports are uploaded as CI artifacts on every run (30-day retention).
+> See [Actions → locust-performance-reports](https://github.com/subbotin-es/rem-waste-qa-performance/actions) to download.
 
 ---
 
@@ -188,7 +217,12 @@ This project respects these constraints and never exceeds 20 concurrent users.
 
 ## References
 
-- [rem-waste-qa GitHub](https://github.com/subbotin-es/rem-waste-qa)
-- [Locust Documentation](https://docs.locust.io/)
-- [FINDINGS.md](FINDINGS.md) — Detailed engineering findings
-- [GitHub Actions CI](.github/workflows/ci.yml)
+| Resource | Link |
+|---|---|
+| Target app (rem-waste-qa) | https://rem-waste-qa-seven.vercel.app |
+| rem-waste-qa source | https://github.com/subbotin-es/rem-waste-qa |
+| This repo | https://github.com/subbotin-es/rem-waste-qa-performance |
+| CI runs & artifacts | https://github.com/subbotin-es/rem-waste-qa-performance/actions |
+| Locust documentation | https://docs.locust.io/ |
+| Engineering findings | [FINDINGS.md](FINDINGS.md) |
+| CI workflow | [.github/workflows/ci.yml](.github/workflows/ci.yml) |
