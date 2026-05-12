@@ -6,6 +6,9 @@ from config import (
     POSTCODE_HAPPY_PATH,
 )
 
+_HEAVY_WASTE = False
+_PLASTERBOARD = False
+
 
 class BookingFlowSmokeUser(HttpUser):
     """
@@ -17,7 +20,7 @@ class BookingFlowSmokeUser(HttpUser):
 
     @task
     def complete_booking_flow(self) -> None:
-        # Step 1: Postcode lookup
+        # Step 1: Postcode lookup — extract addressId for later steps
         with self.client.post(
             POSTCODE_LOOKUP,
             json={"postcode": POSTCODE_HAPPY_PATH},
@@ -28,12 +31,17 @@ class BookingFlowSmokeUser(HttpUser):
             if r.status_code != 200:
                 r.failure(f"Postcode lookup failed: {r.status_code}")
                 return
+            addresses = r.json().get("addresses", [])
+            if not addresses:
+                r.failure("Postcode lookup returned no addresses")
+                return
+            address_id = addresses[0]["id"]
             r.success()
 
         # Step 2: Waste types
         with self.client.post(
             WASTE_TYPES,
-            json={"postcode": POSTCODE_HAPPY_PATH, "heavyWaste": False, "plasterboard": False},
+            json={"postcode": POSTCODE_HAPPY_PATH, "heavyWaste": _HEAVY_WASTE, "plasterboard": _PLASTERBOARD},
             headers={"Content-Type": "application/json"},
             catch_response=True,
             name="2_waste_types",
@@ -43,7 +51,7 @@ class BookingFlowSmokeUser(HttpUser):
                 return
             r.success()
 
-        # Step 3: Skips
+        # Step 3: Skips — extract price for booking confirm
         with self.client.get(
             SKIPS,
             params={"postcode": POSTCODE_HAPPY_PATH, "heavyWaste": "false", "plasterboard": "false"},
@@ -53,6 +61,12 @@ class BookingFlowSmokeUser(HttpUser):
             if r.status_code != 200:
                 r.failure(f"Skips failed: {r.status_code}")
                 return
+            skips = r.json().get("skips", [])
+            skip = next((s for s in skips if s["size"] == "4-yard"), skips[0] if skips else None)
+            if skip is None:
+                r.failure("Skips response returned no skips")
+                return
+            skip_price = skip["price"]
             r.success()
 
         # Step 4: Confirm booking
@@ -60,9 +74,13 @@ class BookingFlowSmokeUser(HttpUser):
             BOOKING_CONFIRM,
             json={
                 "postcode": POSTCODE_HAPPY_PATH,
+                "addressId": address_id,
                 "wasteType": "general",
                 "skipSize": "4-yard",
-                "address": "10 Downing Street",
+                "heavyWaste": _HEAVY_WASTE,
+                "plasterboard": _PLASTERBOARD,
+                "plasterboardOption": "none",
+                "price": skip_price,
             },
             headers={"Content-Type": "application/json"},
             catch_response=True,
