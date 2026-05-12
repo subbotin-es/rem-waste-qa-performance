@@ -1,6 +1,6 @@
 # locustfiles/booking_flow_smoke.py
 from __future__ import annotations
-from locust import HttpUser, task, between, constant
+from locust import HttpUser, task, constant
 from config import (
     POSTCODE_LOOKUP, WASTE_TYPES, SKIPS, BOOKING_CONFIRM,
     POSTCODE_HAPPY_PATH,
